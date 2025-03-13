@@ -267,7 +267,7 @@ GameObject:
   - component: {fileID: 603630641}
   - component: {fileID: 603630640}
   - component: {fileID: 603630639}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Wall
   m_TagString: Ground
   m_Icon: {fileID: 0}
@@ -538,7 +538,19 @@ MonoBehaviour:
     m_ActionId: 351f2ccd-1f9f-44bf-9bec-d62ac5c5f408
     m_ActionName: 'Player/Move[/Keyboard/w,/Keyboard/upArrow,/Keyboard/s,/Keyboard/downArrow,/Keyboard/a,/Keyboard/leftArrow,/Keyboard/d,/Keyboard/rightArrow]'
   - m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 717576998}
+        m_TargetAssemblyTypeName: PlayerMoverment, Assembly-CSharp
+        m_MethodName: Jump
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_ActionId: 6b444451-8a00-4d00-a97e-f47457f736a8
     m_ActionName: 'Player/Look[/Mouse/delta,/Touchscreen/delta,/Pen/delta]'
   - m_PersistentCalls:
@@ -651,11 +663,15 @@ MonoBehaviour:
   rb: {fileID: 717576999}
   moveSpeed: 5
   jumpForce: 10
+  maxJumps: 2
   groundCheckPos: {fileID: 1498161879}
-  groundCheckSize: {x: 1, y: 0.05}
+  groundCheckSize: {x: 0.25, y: 0.05}
   groundLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
+  baseGravity: 2
+  maxFallSpeed: 18
+  fallSpeedMultiplier: 2
   animator: {fileID: 717576997}
 --- !u!50 &717576999
 Rigidbody2D:
@@ -694,7 +710,7 @@ BoxCollider2D:
   m_Enabled: 1
   serializedVersion: 3
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 27d69af9b3e950d4d845301a64f18de6, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -826,8 +842,8 @@ Transform:
   m_GameObject: {fileID: 1498161878}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.413, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -0.02, y: -0.41, z: 0}
+  m_LocalScale: {x: 0, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 717577002}
@@ -843,7 +859,7 @@ GameObject:
   - component: {fileID: 1932775196}
   - component: {fileID: 1932775195}
   - component: {fileID: 1932775194}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Ground
   m_TagString: Ground
   m_Icon: {fileID: 0}
