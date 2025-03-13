@@ -226,7 +226,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 0.83
+  orthographic size: 2
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -657,7 +657,7 @@ Animator:
   m_GameObject: {fileID: 717576995}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 2634dca636b069746a144b5f344e8f66, type: 2}
+  m_Controller: {fileID: 9100000, guid: c2651840b63f25240aa5669d4f81d821, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -683,7 +683,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rb: {fileID: 717576999}
   moveSpeed: 5
-  jumpForce: 10
+  jumpForce: 7
   maxJumps: 2
   groundCheckPos: {fileID: 1498161879}
   groundCheckSize: {x: 0.25, y: 0.03}
@@ -759,7 +759,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.46875, y: 0.875}
+    oldSize: {x: 1, y: 1}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -943,7 +943,7 @@ MonoBehaviour:
     CustomLookAtTarget: 0
   Lens:
     FieldOfView: 34
-    OrthographicSize: 0.83
+    OrthographicSize: 2
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0

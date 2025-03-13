@@ -27,6 +27,7 @@ public class PlayerMoverment : MonoBehaviour
     {
         rb.linearVelocity = new Vector2(horizontalMovement * moveSpeed, rb.linearVelocity.y);
         animator.SetFloat("magnitude", rb.linearVelocity.magnitude);
+        animator.SetFloat("yVelocity", rb.linearVelocity.y);
         GroundCheck();
         Gravity();
     }
@@ -57,11 +58,13 @@ public class PlayerMoverment : MonoBehaviour
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
                 jumpsRemaining--;
+                animator.SetTrigger("jump");
             }
             else if (context.canceled)
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * 0.5f);
                 jumpsRemaining--;
+                animator.SetTrigger("jump");
             }
         }
     }
