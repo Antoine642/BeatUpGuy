@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -33,9 +34,9 @@ public class PlayerMovement : MonoBehaviour
     [Header("Spit Settings")]
     public Transform spitPoint;
     public GameObject spitPrefab;
-    public float spitForce = 10f;
+    public float spitForce = 8f;
     public float spitCooldown = 3f;
-    public ParticleSystem spitParticles;
+    private float lastSpitTime = -Mathf.Infinity; // Temps du dernier crachat
 
     [Header("Level End")]
     private bool isLevelCompleted = false;
@@ -157,11 +158,19 @@ public class PlayerMovement : MonoBehaviour
     // Démarrer l'animation de crachat
     private void StartSpit()
     {
-        spitParticles.Play();
+        if (Time.time - lastSpitTime < spitCooldown) return; // Vérifie le délai de récupération
+
+        lastSpitTime = Time.time; // Met à jour le temps du dernier crachat
         GameObject spit = Instantiate(spitPrefab, spitPoint.position, spitPoint.rotation);
         Rigidbody2D spitRb = spit.GetComponent<Rigidbody2D>();
-        spitRb.AddForce(spitPoint.up * spitForce, ForceMode2D.Impulse);
-        Destroy(spit, 3f); // Détruire le crachat après 3 secondes
+        spitRb.AddForce(spitPoint.right * spitForce, ForceMode2D.Impulse);
+
+        // Configurer le script SpitProjectile
+        SpitProjectile spitProjectile = spit.GetComponent<SpitProjectile>();
+        if (spitProjectile != null)
+        {
+            spitProjectile.groundLayer = groundLayer;
+        }
     }
 
     // Méthode pour déclencher l'animation Tbag (appelée par LevelEnd.cs)
