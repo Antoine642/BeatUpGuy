@@ -103,7 +103,6 @@ public class PlayerMovement : MonoBehaviour
         if(Physics2D.OverlapBox(groundCheckPos.position, groundCheckSize, 0, groundLayer))
         {
             jumpsRemaining = maxJumps;
-            animator.ResetTrigger("jump"); // Reset le trigger de saut lorsque le joueur touche le sol
         }
     }
     // Méthode pour gérer le punch
@@ -120,7 +119,10 @@ public class PlayerMovement : MonoBehaviour
     {
         isPunching = true;
         animator.SetTrigger("punch");
+    }
 
+    public void PunchHit()
+    {
         // Vérifier les objets cassables dans la portée du coup
         Collider2D[] hitObjects = Physics2D.OverlapCircleAll(punchPoint.position, punchRange, breakableLayer);
 
@@ -133,13 +135,10 @@ public class PlayerMovement : MonoBehaviour
                 breakable.TakeHit();
             }
         }
-    }
-
-    // Cette méthode est appelée via un événement d'animation à la fin de l'animation de punch
-    public void FinishPunchAnimation()
-    {
         isPunching = false;
+        horizontalMovement = 0;
     }
+    
     // Méthode pour déclencher l'animation Tbag (appelée par LevelEnd.cs)
     public void TriggerTbagAnimation()
     {
