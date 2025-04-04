@@ -32,14 +32,22 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Level End")]
     private bool isLevelCompleted = false;
-    
+
     [Header("Animator")]
     public Animator animator;
 
     // Update est appelé une fois par frame
     void Update()
     {
-        rb.linearVelocity = new Vector2(horizontalMovement * moveSpeed, rb.linearVelocity.y);
+        // Ne pas permettre le mouvement si le niveau est terminé ou si on est en train de frapper
+        if (!isLevelCompleted && !isPunching)
+        {
+            rb.linearVelocity = new Vector2(horizontalMovement * moveSpeed, rb.linearVelocity.y);
+        }
+        else if (isLevelCompleted || isPunching)
+        {
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+        }
         animator.SetFloat("magnitude", rb.linearVelocity.magnitude);
         animator.SetFloat("yVelocity", rb.linearVelocity.y);
         GroundCheck();
@@ -63,12 +71,15 @@ public class PlayerMovement : MonoBehaviour
     // Méthode pour gérer le mouvement horizontal
     public void Move(InputAction.CallbackContext context)
     {
-        horizontalMovement = context.ReadValue<Vector2>().x;
+        if (!isLevelCompleted && !isPunching)
+        {
+            horizontalMovement = context.ReadValue<Vector2>().x;
+        }
     }
     // Méthode pour gérer le saut
     public void Jump(InputAction.CallbackContext context)
     {
-        if (jumpsRemaining > 0)
+        if (jumpsRemaining > 0 && !isLevelCompleted && !isPunching)
         {
             // Si le joueur est au sol ou en l'air, il peut sauter
             if (context.performed)
@@ -95,7 +106,47 @@ public class PlayerMovement : MonoBehaviour
             animator.ResetTrigger("jump"); // Reset le trigger de saut lorsque le joueur touche le sol
         }
     }
+    // Méthode pour gérer le punch
+    public void Punch(InputAction.CallbackContext context)
+    {
+        if (context.performed && !isPunching && !isLevelCompleted)
+        {
+            StartPunch();
+        }
+    }
 
+    // Démarrer l'animation de punch
+    private void StartPunch()
+    {
+        isPunching = true;
+        animator.SetTrigger("Punch");
+
+        // Vérifier les objets cassables dans la portée du coup
+        Collider2D[] hitObjects = Physics2D.OverlapCircleAll(punchPoint.position, punchRange, breakableLayer);
+
+        // Appliquer des dégâts aux objets cassables
+        foreach (Collider2D obj in hitObjects)
+        {
+            Breakable breakable = obj.GetComponent<Breakable>();
+            if (breakable != null)
+            {
+                breakable.TakeHit();
+            }
+        }
+    }
+
+    // Cette méthode est appelée via un événement d'animation à la fin de l'animation de punch
+    public void FinishPunchAnimation()
+    {
+        isPunching = false;
+    }
+    // Méthode pour déclencher l'animation Tbag (appelée par LevelEnd.cs)
+    public void TriggerTbagAnimation()
+    {
+        isLevelCompleted = true;
+        horizontalMovement = 0;
+        animator.SetTrigger("Tbag");
+    }
     // Méthode pour détecter la collision avec le sol
     private void OnDrawGizmosSelected()
     {
