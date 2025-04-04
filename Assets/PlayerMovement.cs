@@ -26,9 +26,16 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Punch Settings")]
     public Transform punchPoint;
-    public float punchRange = 1.0f;
+    public float punchRange = 0.15f;
     public LayerMask breakableLayer;
     private bool isPunching = false;
+
+    [Header("Spit Settings")]
+    public Transform spitPoint;
+    public GameObject spitPrefab;
+    public float spitForce = 10f;
+    public float spitCooldown = 3f;
+    public ParticleSystem spitParticles;
 
     [Header("Level End")]
     private bool isLevelCompleted = false;
@@ -137,6 +144,24 @@ public class PlayerMovement : MonoBehaviour
         }
         isPunching = false;
         horizontalMovement = 0;
+    }
+
+    public void Spit(InputAction.CallbackContext context)
+    {
+        if (context.performed && !isLevelCompleted && !isPunching)
+        {
+            StartSpit();
+        }
+    }
+
+    // Démarrer l'animation de crachat
+    private void StartSpit()
+    {
+        spitParticles.Play();
+        GameObject spit = Instantiate(spitPrefab, spitPoint.position, spitPoint.rotation);
+        Rigidbody2D spitRb = spit.GetComponent<Rigidbody2D>();
+        spitRb.AddForce(spitPoint.up * spitForce, ForceMode2D.Impulse);
+        Destroy(spit, 3f); // Détruire le crachat après 3 secondes
     }
 
     // Méthode pour déclencher l'animation Tbag (appelée par LevelEnd.cs)
