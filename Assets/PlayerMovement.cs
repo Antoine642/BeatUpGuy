@@ -138,7 +138,7 @@ public class PlayerMovement : MonoBehaviour
         isPunching = false;
         horizontalMovement = 0;
     }
-    
+
     // Méthode pour déclencher l'animation Tbag (appelée par LevelEnd.cs)
     public void TriggerTbagAnimation()
     {
@@ -152,5 +152,7 @@ public class PlayerMovement : MonoBehaviour
     {
         Gizmos.color = Color.white;
         Gizmos.DrawWireCube(groundCheckPos.position, groundCheckSize);
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(punchPoint.position, punchRange);
     }
 }
