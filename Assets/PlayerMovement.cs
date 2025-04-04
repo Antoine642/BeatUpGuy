@@ -119,7 +119,7 @@ public class PlayerMovement : MonoBehaviour
     private void StartPunch()
     {
         isPunching = true;
-        animator.SetTrigger("Punch");
+        animator.SetTrigger("punch");
 
         // Vérifier les objets cassables dans la portée du coup
         Collider2D[] hitObjects = Physics2D.OverlapCircleAll(punchPoint.position, punchRange, breakableLayer);
@@ -147,6 +147,7 @@ public class PlayerMovement : MonoBehaviour
         horizontalMovement = 0;
         animator.SetTrigger("Tbag");
     }
+    
     // Méthode pour détecter la collision avec le sol
     private void OnDrawGizmosSelected()
     {
