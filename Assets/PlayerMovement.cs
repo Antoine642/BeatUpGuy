@@ -1,24 +1,38 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerMoverment : MonoBehaviour
+public class PlayerMovement : MonoBehaviour
 {
     public Rigidbody2D rb;
+
     [Header("Movement")]
     public float moveSpeed = 5f; // Vitesse de déplacement
     float horizontalMovement;
+
     [Header("Jump")]
     public float jumpForce = 10f; // Augmentation de la force de saut
     public int maxJumps = 2; // Nombre de saut maximum
     int jumpsRemaining; // Nombre de saut restant
+
     [Header("GroundCheck")]
     public Transform groundCheckPos;
     public Vector2 groundCheckSize = new Vector2(0.5f, 0.05f); // Taille de la zone de vérification du sol
     public LayerMask groundLayer;
+
     [Header("Gravity")]
     public float baseGravity = 2f; // Gravité de base
     public float maxFallSpeed = 18f; // Vitesse de chute maximale
     public float fallSpeedMultiplier = 2f; // Multiplicateur de vitesse de chute
+
+    [Header("Punch Settings")]
+    public Transform punchPoint;
+    public float punchRange = 1.0f;
+    public LayerMask breakableLayer;
+    private bool isPunching = false;
+
+    [Header("Level End")]
+    private bool isLevelCompleted = false;
+    
     [Header("Animator")]
     public Animator animator;
 

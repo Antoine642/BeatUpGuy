@@ -726,6 +726,11 @@ MonoBehaviour:
   baseGravity: 2
   maxFallSpeed: 18
   fallSpeedMultiplier: 2
+  punchPoint: {fileID: 0}
+  punchRange: 1
+  breakableLayer:
+    serializedVersion: 2
+    m_Bits: 0
   animator: {fileID: 717576997}
 --- !u!50 &717576999
 Rigidbody2D:
@@ -1196,7 +1201,7 @@ Transform:
   m_GameObject: {fileID: 1498161878}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.016, y: -0.422, z: 0}
+  m_LocalPosition: {x: -0.016, y: -0.452, z: 0}
   m_LocalScale: {x: 0, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
