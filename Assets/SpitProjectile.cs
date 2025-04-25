@@ -42,6 +42,15 @@ public class SpitProjectile : MonoBehaviour
         }
     }
 
+    private void FixedUpdate()
+    {
+        if (isSliding)
+        {
+            // Ralentit progressivement le crachat
+            rb.linearVelocity *= stickyFactor;
+        }
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         // Check if collision is with ground

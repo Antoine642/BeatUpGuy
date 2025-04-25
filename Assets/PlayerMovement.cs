@@ -40,6 +40,18 @@ public class PlayerMovement : MonoBehaviour
     public float spitCooldown = 3f;
     private float lastSpitTime = -Mathf.Infinity;
 
+    [Header("Audio Settings")]
+    public AudioSource audioSource;
+    public AudioClip jumpSound;
+    public AudioClip punchSound;
+    public AudioClip spitSound;
+    public AudioClip landingSound;
+    public AudioClip footstepSound;
+    [Range(0f, 1f)]
+    public float soundVolume = 0.7f;
+    private float footstepTimer = 0f;
+    public float footstepInterval = 0.3f;
+
     [Header("Level End")]
     private bool isLevelCompleted = false;
 
@@ -76,10 +88,32 @@ public class PlayerMovement : MonoBehaviour
         if (!isLevelCompleted && !isPunching)
         {
             rb.linearVelocity = new Vector2(horizontalMovement * moveSpeed, rb.linearVelocity.y);
+            
+            // Gérer le son des pas
+            if (Mathf.Abs(horizontalMovement) > 0.1f && Physics2D.OverlapBox(groundCheckPos.position, groundCheckSize, 0, groundLayer))
+            {
+                footstepTimer += Time.deltaTime;
+                
+                // Jouer le son des pas à intervalles réguliers lorsque le joueur se déplace au sol
+                if (footstepTimer >= footstepInterval)
+                {
+                    if (audioSource != null && footstepSound != null)
+                    {
+                        audioSource.PlayOneShot(footstepSound, soundVolume * 0.7f);
+                    }
+                    footstepTimer = 0f;
+                }
+            }
+            else
+            {
+                // Réinitialiser le timer si le joueur ne bouge pas ou n'est pas au sol
+                footstepTimer = 0f;
+            }
         }
         else if (isLevelCompleted || isPunching)
         {
             rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+            footstepTimer = 0f; // Réinitialiser le timer quand le joueur ne peut pas bouger
         }
 
         if (animator != null)
@@ -149,6 +183,12 @@ public class PlayerMovement : MonoBehaviour
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
                 jumpsRemaining--;
                 if (animator != null) animator.SetTrigger("jump");
+                
+                // Jouer le son de saut
+                if (audioSource != null && jumpSound != null)
+                {
+                    audioSource.PlayOneShot(jumpSound, soundVolume);
+                }
             }
             // si le joueur est en l'air et que le saut est annulé, il peut sauter à nouveau
             else if (context.canceled && !Physics2D.OverlapBox(groundCheckPos.position, groundCheckSize, 0, groundLayer))
@@ -165,8 +205,17 @@ public class PlayerMovement : MonoBehaviour
     {
         if (groundCheckPos == null) return;
 
-        if (Physics2D.OverlapBox(groundCheckPos.position, groundCheckSize, 0, groundLayer))
+        bool wasGrounded = jumpsRemaining == maxJumps;
+        bool isGrounded = Physics2D.OverlapBox(groundCheckPos.position, groundCheckSize, 0, groundLayer);
+
+        if (isGrounded)
         {
+            // Si le joueur n'était pas au sol avant et qu'il atterrit maintenant, jouer le son d'atterrissage
+            if (!wasGrounded && rb.linearVelocity.y < -2f && audioSource != null && landingSound != null)
+            {
+                audioSource.PlayOneShot(landingSound, soundVolume);
+            }
+            
             jumpsRemaining = maxJumps;
         }
     }
@@ -196,6 +245,12 @@ public class PlayerMovement : MonoBehaviour
     // Cette fonction est appelée par l'animation ou directement depuis StartPunch si pas d'animateur
     public void PunchHit()
     {
+        // Jouer le son de punch
+        if (audioSource != null && punchSound != null)
+        {
+            audioSource.PlayOneShot(punchSound, soundVolume);
+        }
+        
         // Debug
         Debug.Log("PunchHit called. Punch position: " + punchPoint.position + ", range: " + punchRange);
 
@@ -259,6 +314,12 @@ public class PlayerMovement : MonoBehaviour
         {
             Debug.LogError("Spit prefab is missing!");
             return;
+        }
+
+        // Jouer le son du crachat
+        if (audioSource != null && spitSound != null)
+        {
+            audioSource.PlayOneShot(spitSound, soundVolume);
         }
 
         lastSpitTime = Time.time; // Met à jour le temps du dernier crachat
