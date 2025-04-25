@@ -12,9 +12,10 @@ GameObject:
   - component: {fileID: 797398930242768175}
   - component: {fileID: 8632853879830264616}
   - component: {fileID: 7300027306192608603}
+  - component: {fileID: 1299653926602307911}
   m_Layer: 8
   m_Name: Enemy
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -28,12 +29,13 @@ Transform:
   m_GameObject: {fileID: 2075415034256429558}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.182, y: -2.462, z: 2.650073}
+  m_LocalPosition: {x: 0.182, y: -2.209, z: 2.650073}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1001742143052814857}
   - {fileID: 1112514861968802410}
+  - {fileID: 8632855025473259543}
+  - {fileID: 2724305890346911220}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &797398930242768175
@@ -130,24 +132,75 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9d1b7945d95171419d42ce17391cd9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 2
+  moveSpeed: 1.2
   canMove: 1
   faceRight: 1
-  groundDetection: {fileID: 1001742143052814857}
+  groundDetection: {fileID: 8632855025473259543}
+  groundCheckSize: {x: 0.5, y: 0.05}
   detectionDistance: 0.5
   maxHealth: 3
+  heartPrefab: {fileID: 3992324172929417878, guid: 93ee9fde8b0e6eb4bb1983b377c77680, type: 3}
+  healthBarParent: {fileID: 2724305890346911220}
+  heartSpacing: 0.2
+  healthBarOffset: {x: 0, y: 3, z: 0}
   damage: 1
-  attackRange: 0.5
+  attackRange: 0.15
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
   attackPoint: {fileID: 1112514861968802410}
   attackCooldown: 1.5
   knockbackForce: 5
-  deathEffect: {fileID: 0}
+  deathEffect: {fileID: 1130650209925009134, guid: d0003c229fcd058468b3793467972376, type: 3}
   hitSound: {fileID: 0}
   deathSound: {fileID: 0}
---- !u!1 &7168692567402042196
+--- !u!61 &1299653926602307911
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2075415034256429558}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: -0.02183953, y: -0.08747041}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1, y: 1}
+    newSize: {x: 1, y: 1}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 0.54573745, y: 0.8250592}
+  m_EdgeRadius: 0
+--- !u!1 &5849858480013168119
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -155,24 +208,55 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1001742143052814857}
+  - component: {fileID: 8632855025473259543}
   m_Layer: 8
-  m_Name: GroundDetection
+  m_Name: GroundCheck
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1001742143052814857
+--- !u!4 &8632855025473259543
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7168692567402042196}
+  m_GameObject: {fileID: 5849858480013168119}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -111.9906, y: -194.14696, z: -2.650073}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4579245655813026261}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5874975130642296516
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2724305890346911220}
+  m_Layer: 8
+  m_Name: EnemyLife
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2724305890346911220
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5874975130642296516}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.304, y: 0.388, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -203,7 +287,7 @@ Transform:
   m_GameObject: {fileID: 8084393201719641193}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -111.9906, y: -194.14696, z: -2.650073}
+  m_LocalPosition: {x: 0.296, y: -0.155, z: -2.650073}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

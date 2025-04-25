@@ -45,7 +45,7 @@ public class PlayerHealth : MonoBehaviour
         currentHealth = maxHealth;
 
         // Find UI Manager in the scene
-        uiManager = FindObjectOfType<UIManager>();
+        uiManager = FindFirstObjectByType<UIManager>();
 
         // Update UI
         UpdateHealthUI();
