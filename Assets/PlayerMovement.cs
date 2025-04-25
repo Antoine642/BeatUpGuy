@@ -29,6 +29,8 @@ public class PlayerMovement : MonoBehaviour
     public Transform punchPoint;
     public float punchRange = 0.15f;
     public LayerMask breakableLayer;
+    public LayerMask enemyLayer;
+    public int punchDamage = 1;
     private bool isPunching = false;
 
     [Header("Spit Settings")]
@@ -60,12 +62,34 @@ public class PlayerMovement : MonoBehaviour
         animator.SetFloat("yVelocity", rb.linearVelocity.y);
         GroundCheck();
         Gravity();
+
+        // Flip the player sprite based on horizontal movement
+        FlipSprite();
     }
+
+    // Method to flip the sprite based on movement direction
+    private void FlipSprite()
+    {
+        if (horizontalMovement != 0)
+        {
+            // If moving right, ensure no rotation
+            if (horizontalMovement > 0)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, 0);
+            }
+            // If moving left, rotate to face left
+            else if (horizontalMovement < 0)
+            {
+                transform.rotation = Quaternion.Euler(0, 180, 0);
+            }
+        }
+    }
+
     // Méthode pour gérer la gravité
     private void Gravity()
     {
         // Si le joueur est en l'air, on applique la gravité
-        if(rb.linearVelocity.y < 0)
+        if (rb.linearVelocity.y < 0)
         {
             rb.gravityScale = baseGravity * fallSpeedMultiplier; // Applique le multiplicateur de gravité
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, Mathf.Clamp(rb.linearVelocity.y, -maxFallSpeed, Mathf.Infinity)); // On limite la vitesse de chute maximale
@@ -108,7 +132,7 @@ public class PlayerMovement : MonoBehaviour
     // Méthode pour vérifier si le joueur est au sol
     private void GroundCheck()
     {
-        if(Physics2D.OverlapBox(groundCheckPos.position, groundCheckSize, 0, groundLayer))
+        if (Physics2D.OverlapBox(groundCheckPos.position, groundCheckSize, 0, groundLayer))
         {
             jumpsRemaining = maxJumps;
         }
@@ -143,6 +167,20 @@ public class PlayerMovement : MonoBehaviour
                 breakable.TakeHit();
             }
         }
+
+        // Check for enemies in punch range
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(punchPoint.position, punchRange, enemyLayer);
+
+        // Apply damage to enemies
+        foreach (Collider2D enemyCollider in hitEnemies)
+        {
+            Enemy enemy = enemyCollider.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(punchDamage, transform.position);
+            }
+        }
+
         isPunching = false;
         horizontalMovement = 0;
     }
@@ -170,6 +208,7 @@ public class PlayerMovement : MonoBehaviour
         if (spitProjectile != null)
         {
             spitProjectile.groundLayer = groundLayer;
+            spitProjectile.enemyLayer = enemyLayer;
         }
     }
 
@@ -180,7 +219,7 @@ public class PlayerMovement : MonoBehaviour
         horizontalMovement = 0;
         animator.SetTrigger("Tbag");
     }
-    
+
     // Méthode pour détecter la collision avec le sol
     private void OnDrawGizmosSelected()
     {
