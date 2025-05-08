@@ -71,18 +71,18 @@ public class Enemy : MonoBehaviour
         // Set initial movement direction
         movement = faceRight ? Vector2.right : Vector2.left;
 
-        // Log enemy initialization for debugging
-        Debug.Log(gameObject.name + " initialized on layer " + gameObject.layer + " with tag " + gameObject.tag);
-
-        // Ensure this GameObject is on layer 8 (Enemy layer)
-        if (gameObject.layer != 8)
+        // Ensure this GameObject is on the Enemy layer
+        if (LayerMask.LayerToName(gameObject.layer) != "Enemy")
         {
-            Debug.LogWarning(gameObject.name + " is not on the Enemy layer (8). Current layer: " + gameObject.layer);
+            int enemyLayerIndex = LayerMask.NameToLayer("Enemy");
+            if (enemyLayerIndex != -1)
+            {
+                gameObject.layer = enemyLayerIndex;
+            }
         }
 
         // Initialize health bar display
         InitializeHealthBar();
-        Debug.Log("Health bar initialized with " + maxHealth + " hearts");
     }
 
     void Update()
@@ -130,12 +130,13 @@ public class Enemy : MonoBehaviour
     {
         // Check if there's a wall in front of the enemy
         float direction = faceRight ? 1f : -1f;
-        RaycastHit2D wallInfo = Physics2D.Raycast(transform.position, new Vector2(direction, 0), 0.5f, LayerMask.GetMask("Ground"));
+        RaycastHit2D wallInfo = Physics2D.Raycast(transform.position, new Vector2(direction, 0), 0.5f, LayerMask.GetMask("Ground", "Breakable"));
 
-        // Additional check with layer number in case layer name is not correctly set
+        // Additional check with layer numbers in case layer names are not correctly set
         if (wallInfo.collider == null)
         {
-            wallInfo = Physics2D.Raycast(transform.position, new Vector2(direction, 0), 0.5f, 1 << 3);
+            // Check for Ground (layer 3) or Breakable (using typical layer number)
+            wallInfo = Physics2D.Raycast(transform.position, new Vector2(direction, 0), 0.5f, (1 << 3) | (1 << 6));
         }
 
         return wallInfo.collider != null;
@@ -179,8 +180,6 @@ public class Enemy : MonoBehaviour
     {
         if (isDead) return;
 
-        Debug.Log(gameObject.name + " taking " + damage + " damage");
-
         currentHealth -= damage;
 
         // Apply knockback
@@ -201,7 +200,6 @@ public class Enemy : MonoBehaviour
 
         // Update health display
         UpdateHealthDisplay();
-        Debug.Log("Updated health display. Current health: " + currentHealth);
 
         // Check if dead
         if (currentHealth <= 0)
@@ -213,8 +211,6 @@ public class Enemy : MonoBehaviour
     // Apply damage specifically from spit projectile
     public void TakeDamageFromSpit(int damage, Vector2 source)
     {
-        Debug.Log(gameObject.name + " hit by spit - stunning only, no damage");
-
         // Don't apply damage, just stun the enemy
         Vector2 knockbackDir = ((Vector2)transform.position - source).normalized;
         
@@ -229,8 +225,6 @@ public class Enemy : MonoBehaviour
     public void TakeDamageFromBeat(int damage, Vector2 source)
     {
         if (isDead) return;
-
-        Debug.Log(gameObject.name + " taking beat damage: " + damage);
 
         // Apply increased damage for beat attacks
         int beatDamage = damage; // Double damage for beat attacks
@@ -301,8 +295,6 @@ public class Enemy : MonoBehaviour
     {
         isDead = true;
 
-        Debug.Log(gameObject.name + " died");
-
         // Stop movement
         rb.linearVelocity = Vector2.zero;
 
@@ -370,7 +362,6 @@ public class Enemy : MonoBehaviour
         // Si le prefab de cœur n'est pas assigné
         if (heartPrefab == null)
         {
-            Debug.LogError("Heart prefab is not assigned for " + gameObject.name + ". Please assign a heart sprite prefab in the inspector.");
             return;
         }
 
@@ -381,7 +372,6 @@ public class Enemy : MonoBehaviour
             healthBarParent = healthBarObj.transform;
             healthBarParent.SetParent(transform);
             healthBarParent.localPosition = healthBarOffset;
-            Debug.Log("Created new healthBarParent at position " + healthBarOffset);
         }
 
         // Supprime les anciens cœurs s'il y en a
@@ -401,7 +391,6 @@ public class Enemy : MonoBehaviour
             if (spriteRenderer == null)
             {
                 spriteRenderer = heart.AddComponent<SpriteRenderer>();
-                Debug.LogWarning("Heart prefab doesn't have a SpriteRenderer component. Added one automatically.");
             }
             
             // S'assurer que le cœur est visible (ordre de tri et layer)
@@ -412,8 +401,6 @@ public class Enemy : MonoBehaviour
             heart.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f); // Adapter la taille si nécessaire
             heart.SetActive(true);
             healthHearts.Add(heart);
-            
-            Debug.Log("Created heart " + i + " at position " + heart.transform.position);
         }
     }
 

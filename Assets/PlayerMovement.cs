@@ -74,11 +74,11 @@ public class PlayerMovement : MonoBehaviour
         Debug.Log("Enemy Layer value: " + enemyLayer.value);
         Debug.Log("Player is on layer: " + gameObject.layer);
 
-        // Make sure enemyLayer is set to target layer 8 if not set in editor
+        // Make sure enemyLayer is set to target the Enemy layer if not set in editor
         if (enemyLayer.value == 0)
         {
-            enemyLayer = 1 << 8; // Set to layer 8 (Enemy layer)
-            Debug.LogWarning("Enemy layer was not set, defaulting to layer 8");
+            enemyLayer = LayerMask.GetMask("Enemy"); // Using layer name instead of number
+            Debug.LogWarning("Enemy layer was not set, defaulting to Enemy layer");
         }
     }
 
@@ -272,11 +272,11 @@ public class PlayerMovement : MonoBehaviour
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(punchPoint.position, punchRange, enemyLayer);
         Debug.Log("Found " + hitEnemies.Length + " enemies within punch range using layer mask: " + enemyLayer.value);
 
-        // Si aucun ennemi n'est trouvé avec le masque, essayer directement avec la couche 8
+        // Si aucun ennemi n'est trouvé avec le masque, essayer directement avec la couche Enemy
         if (hitEnemies.Length == 0)
         {
-            hitEnemies = Physics2D.OverlapCircleAll(punchPoint.position, punchRange, 1 << 8);
-            Debug.Log("Retry with layer 8 found " + hitEnemies.Length + " enemies");
+            hitEnemies = Physics2D.OverlapCircleAll(punchPoint.position, punchRange, LayerMask.GetMask("Enemy"));
+            Debug.Log("Retry with Enemy layer found " + hitEnemies.Length + " enemies");
         }
 
         // Appliquer des dégâts aux ennemis

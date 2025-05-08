@@ -18,11 +18,11 @@ public class SpitProjectile : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         Destroy(gameObject, maxLifetime);
 
-        // Si la couche ennemie n'est pas définie, utiliser le layer 8 (Enemy) par défaut
+        // Si la couche ennemie n'est pas définie, utiliser la couche "Enemy" par défaut
         if (enemyLayer.value == 0)
         {
-            enemyLayer = 1 << 8;
-            Debug.Log("SpitProjectile: Enemy layer not set, defaulting to layer 8");
+            enemyLayer = LayerMask.GetMask("Enemy");
+            Debug.Log("SpitProjectile: Enemy layer not set, defaulting to Enemy layer");
         }
 
         // Si la couche sol n'est pas définie, utiliser le layer 3 (Ground) par défaut
