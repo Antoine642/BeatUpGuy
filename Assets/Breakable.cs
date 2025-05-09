@@ -6,7 +6,10 @@ public class Breakable : MonoBehaviour
     public int hitsToBreak = 3;
     public float shakeDuration = 0.2f;
     public float shakeIntensity = 0.1f;
-
+    
+    [Header("Sprites")]
+    public Sprite[] damageSprites; // Array of sprites showing progressive damage
+    
     [Header("Effects")]
     public GameObject breakParticles;
     public AudioClip hitSound;
@@ -29,6 +32,12 @@ public class Breakable : MonoBehaviour
         if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
+        }
+        
+        // Verify we have a sprite renderer
+        if (spriteRenderer == null)
+        {
+            Debug.LogError("No SpriteRenderer found on breakable object!");
         }
     }
 
@@ -61,11 +70,29 @@ public class Breakable : MonoBehaviour
         // Start shaking
         shakeTimer = shakeDuration;
         isShaking = true;
+        
+        // Update sprite based on damage
+        UpdateSprite();
 
         // Check if block should break
         if (currentHits >= hitsToBreak)
         {
             Break();
+        }
+    }
+    
+    private void UpdateSprite()
+    {
+        if (spriteRenderer != null && damageSprites != null && damageSprites.Length > 0)
+        {
+            // Calculate which sprite to show based on current damage
+            int spriteIndex = Mathf.Min(currentHits, damageSprites.Length - 1);
+            
+            // Only update if we have that sprite in our array
+            if (spriteIndex >= 0 && spriteIndex < damageSprites.Length)
+            {
+                spriteRenderer.sprite = damageSprites[spriteIndex];
+            }
         }
     }
 
