@@ -972,7 +972,10 @@ MonoBehaviour:
   hitsToBreak: 3
   shakeDuration: 0.2
   shakeIntensity: 0.1
-  damageSprites: []
+  damageSprites:
+  - {fileID: 459394773, guid: aebcf5ff2abe2c24582a74521411e50b, type: 3}
+  - {fileID: 496618818, guid: aebcf5ff2abe2c24582a74521411e50b, type: 3}
+  - {fileID: -1966268643, guid: aebcf5ff2abe2c24582a74521411e50b, type: 3}
   breakParticles: {fileID: 0}
   hitSound: {fileID: 0}
   breakSound: {fileID: 0}
@@ -1787,6 +1790,22 @@ PrefabInstance:
     - target: {fileID: 6264663603654802869, guid: 98b2982e96d60d5439cca6104f06b3ee, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 8815367629241078742, guid: 98b2982e96d60d5439cca6104f06b3ee, type: 3}
+      propertyPath: maxJumps
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8815367629241078742, guid: 98b2982e96d60d5439cca6104f06b3ee, type: 3}
+      propertyPath: jumpForce
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 8815367629241078742, guid: 98b2982e96d60d5439cca6104f06b3ee, type: 3}
+      propertyPath: moveSpeed
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8815367629241078742, guid: 98b2982e96d60d5439cca6104f06b3ee, type: 3}
+      propertyPath: enemyLayer.m_Bits
+      value: 256
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
