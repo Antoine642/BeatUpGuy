@@ -150,10 +150,10 @@ MonoBehaviour:
     m_Bits: 128
   attackPoint: {fileID: 1112514861968802410}
   attackCooldown: 1.5
-  knockbackForce: 5
+  knockbackForce: 3
   deathEffect: {fileID: 1130650209925009134, guid: d0003c229fcd058468b3793467972376, type: 3}
-  hitSound: {fileID: 0}
-  deathSound: {fileID: 0}
+  hitSound: {fileID: 8300000, guid: 09f878d2aac6ad24c9bfe02f934f170d, type: 3}
+  deathSound: {fileID: 8300000, guid: bf0128dba9f6de944aa4ebab48c66e0f, type: 3}
 --- !u!61 &1299653926602307911
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -256,7 +256,7 @@ Transform:
   m_GameObject: {fileID: 5874975130642296516}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.304, y: 0.388, z: 0}
+  m_LocalPosition: {x: -0.05, y: 0.41, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -77,6 +77,7 @@ GameObject:
   - component: {fileID: 8815367629241078742}
   - component: {fileID: 8570057329714810728}
   - component: {fileID: 8299163527824640529}
+  - component: {fileID: 8711850392640357274}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -243,9 +244,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 8675329469585792125}
-  moveSpeed: 5
-  jumpForce: 7
-  maxJumps: 2
+  moveSpeed: 4
+  jumpForce: 6
+  maxJumps: 1
   groundCheckPos: {fileID: 5079799822578783450}
   groundCheckSize: {x: 0.25, y: 0.03}
   groundLayer:
@@ -259,10 +260,22 @@ MonoBehaviour:
   breakableLayer:
     serializedVersion: 2
     m_Bits: 64
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 256
+  punchDamage: 1
   spitPoint: {fileID: 190900953225630511}
   spitPrefab: {fileID: 1274444529845328055, guid: 799867c61fc95574b8314747e304e2d6, type: 3}
   spitForce: 8
   spitCooldown: 3
+  audioSource: {fileID: 0}
+  jumpSound: {fileID: 8300000, guid: f5ddcd19961d55d4db42006a3a2d689f, type: 3}
+  punchSound: {fileID: 8300000, guid: 12aeeeb45bb1e3940a8f7939a1867bad, type: 3}
+  spitSound: {fileID: 8300000, guid: a3da042f78250714785acc8ed78d487e, type: 3}
+  landingSound: {fileID: 0}
+  footstepSound: {fileID: 0}
+  soundVolume: 0.7
+  footstepInterval: 0.3
   animator: {fileID: 8570057329714810728}
 --- !u!95 &8570057329714810728
 Animator:
@@ -428,6 +441,24 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &8711850392640357274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6264663603654802869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c831070fa0576a4dae2e878856fde66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 5
+  invulnerabilityTime: 1.5
+  knockbackForce: 7
+  hitSound: {fileID: 8300000, guid: f93086d591891c547a38c0d75fc3cf91, type: 3}
+  deathSound: {fileID: 8300000, guid: bff78c99ecbf8db44b5e73807351600b, type: 3}
+  hitEffect: {fileID: 0}
 --- !u!1 &8763938508251253495
 GameObject:
   m_ObjectHideFlags: 0

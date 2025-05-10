@@ -14,6 +14,11 @@ public class Breakable : MonoBehaviour
     public GameObject breakParticles;
     public AudioClip hitSound;
     public AudioClip breakSound;
+    
+    [Header("Heart Drop")]
+    [Range(0f, 1f)]
+    public float heartDropChance = 0.6f; // 3/5 chance (60%)
+    public GameObject heartPrefab; // Heart pickup prefab
 
     private int currentHits = 0;
     private bool isShaking = false;
@@ -108,6 +113,12 @@ public class Breakable : MonoBehaviour
         if (breakParticles != null)
         {
             Instantiate(breakParticles, transform.position, Quaternion.identity);
+        }
+        
+        // Random chance to drop a heart (3/5 chance)
+        if (heartPrefab != null && Random.value < heartDropChance)
+        {
+            Instantiate(heartPrefab, transform.position, Quaternion.identity);
         }
 
         // Destroy the block
