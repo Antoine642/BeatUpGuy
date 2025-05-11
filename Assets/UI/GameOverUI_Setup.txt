@@ -1,0 +1,57 @@
+Game Over UI Setup Instructions:
+
+1. Create a Canvas object in your scene (if one doesn't exist already)
+   - Right-click in Hierarchy > UI > Canvas
+   - Make sure the Canvas has a Canvas Scaler component set to "Scale with Screen Size"
+
+2. Create a Timer Display:
+   - Create a UI Text (TextMeshPro) object as a child of the Canvas
+   - Position it at the top of the screen
+   - Name it "TimerText"
+   - Add the Timer script to the Canvas object and assign this text element to the timeText field
+
+3. Create a Game Over Panel:
+   - Create a Panel object as a child of the Canvas
+   - Name it "GameOverPanel"
+   - Set its anchor to stretch in both directions (fill screen)
+   - Add a Background Image component with semi-transparent dark color
+   - This panel will be hidden by default and shown only on game over
+
+4. Add UI elements to the Game Over Panel:
+   - Create a TextMeshPro Text object as child of GameOverPanel
+   - Name it "GameOverText"
+   - Set text to "GAME OVER"
+   - Position it at the top of the panel
+   - Style with large, bold font
+
+   - Create another TextMeshPro Text object as child of GameOverPanel
+   - Name it "CompletionTimeText" 
+   - Set text to "Your Time: 00:00:00"
+   - Position it below the Game Over text
+
+   - Create a Button object as child of GameOverPanel
+   - Name it "RetryButton"
+   - Set text to "Retry"
+   - Position it below the completion time text
+
+   - Create another Button object as child of GameOverPanel
+   - Name it "MainMenuButton"
+   - Set text to "Main Menu"
+   - Position it below the retry button
+
+5. Add the GameOverUI script to the Canvas:
+   - Assign the GameOverPanel to the gameOverPanel field
+   - Assign the CompletionTimeText to the completionTimeText field
+   - Assign the RetryButton to the retryButton field
+   - Assign the MainMenuButton to the mainMenuButton field
+
+6. Create and Link the GameManager:
+   - Create an empty GameObject in your scene and name it "GameManager"
+   - Add a GameManager script to it (you may need to create this script)
+   - In the GameManager script, add a public field: public GameOverUI gameOverUI;
+   - Assign the GameOverUI component from your Canvas to this field via the Inspector
+   - The GameManager should include methods like GameOver() and CompleteLevel() that will control the game state
+
+7. Final Steps:
+   - Make sure the GameOverPanel is set to inactive (unchecked) by default
+   - Test the game by triggering the GameManager.GameOver() or GameManager.CompleteLevel() methods

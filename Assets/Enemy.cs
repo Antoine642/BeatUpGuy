@@ -12,6 +12,20 @@ public class Enemy : MonoBehaviour
     public Vector2 groundCheckSize = new Vector2(0.5f, 0.05f);
     public float detectionDistance = 0.5f;
 
+    [Header("Player Detection")]
+    public bool enablePlayerDetection = true;
+    public float playerDetectionRadius = 5f;
+    public LayerMask playerDetectionLayer;
+    public bool playerDetected = false;
+    public float chaseSpeedMultiplier = 1.2f;
+    public float flipCooldown = 0.5f;  // Cooldown time between direction flips
+    private float lastFlipTime = 0f;   // Last time the enemy flipped direction
+    public float flipHysteresis = 0.8f;  // Wider zone for flipping decision stability
+
+    [Header("Collision")]
+    public bool ignorePlayerCollision = true;
+    private Coroutine freezeCoroutine;
+
     [Header("Health")]
     public int maxHealth = 3;
     private int currentHealth;
@@ -27,18 +41,12 @@ public class Enemy : MonoBehaviour
     public LayerMask playerLayer;
     public Transform attackPoint;
     public float attackCooldown = 1.5f;
-    private bool canAttack = true;
-
-    [Header("Effects")]
+    private bool canAttack = true; [Header("Effects")]
     public float knockbackForce = 5f;
     public GameObject deathEffect;
-    public AudioClip hitSound;
-    public AudioClip deathSound;
-
     // Components
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
-    private AudioSource audioSource;
     private bool isDead = false;
     private bool isStunned = false;
     private Vector2 movement;
@@ -57,14 +65,11 @@ public class Enemy : MonoBehaviour
             boxCollider = gameObject.AddComponent<BoxCollider2D>();
             boxCollider.size = new Vector2(0.5f, 0.8f);
         }
-
-        // Initialize audio
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
+        if (ignorePlayerCollision)
         {
-            audioSource = gameObject.AddComponent<AudioSource>();
+            // Uncommenting this line would make players walk through enemies
+            Physics2D.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("Player"), true);
         }
-
         // Initialize health
         currentHealth = maxHealth;
 
@@ -84,10 +89,16 @@ public class Enemy : MonoBehaviour
         // Initialize health bar display
         InitializeHealthBar();
     }
-
     void Update()
     {
+        // Don't do anything if dead or stunned/frozen
         if (isDead || isStunned) return;
+
+        // Check for player detection
+        if (enablePlayerDetection)
+        {
+            DetectPlayer();
+        }
 
         if (canMove)
         {
@@ -110,13 +121,15 @@ public class Enemy : MonoBehaviour
             }
 
             // If no ground detected or hit a wall, flip the character
-            if (!isGrounded || CheckWall())
+            // Only flip if player is not detected
+            if (!playerDetected && (!isGrounded || CheckWall()))
             {
                 Flip();
             }
 
             // Move in current direction
-            rb.linearVelocity = new Vector2(movement.x * moveSpeed, rb.linearVelocity.y);
+            float currentSpeed = playerDetected ? moveSpeed * chaseSpeedMultiplier : moveSpeed;
+            rb.linearVelocity = new Vector2(movement.x * currentSpeed, rb.linearVelocity.y);
 
             // Try to attack if player is in range
             if (canAttack)
@@ -128,18 +141,26 @@ public class Enemy : MonoBehaviour
 
     bool CheckWall()
     {
-        // Check if there's a wall in front of the enemy
+        // Direction based on which way the enemy is facing
         float direction = faceRight ? 1f : -1f;
-        RaycastHit2D wallInfo = Physics2D.Raycast(transform.position, new Vector2(direction, 0), 0.5f, LayerMask.GetMask("Ground", "Breakable"));
-
-        // Additional check with layer numbers in case layer names are not correctly set
-        if (wallInfo.collider == null)
-        {
-            // Check for Ground (layer 3) or Breakable (using typical layer number)
-            wallInfo = Physics2D.Raycast(transform.position, new Vector2(direction, 0), 0.5f, (1 << 3) | (1 << 6));
-        }
-
-        return wallInfo.collider != null;
+        Vector2 rayDirection = new Vector2(direction, 0);
+        float rayDistance = 0.5f;
+        
+        // Try with layer masks first (more readable approach)
+        int groundLayer = LayerMask.GetMask("Ground", "Breakable");
+        int enemyLayer = LayerMask.GetMask("Enemy");
+        
+        // Fallback layer numbers in case names aren't set properly
+        if (groundLayer == 0) groundLayer = (1 << 3) | (1 << 6);
+        if (enemyLayer == 0) enemyLayer = 1 << 8;
+        
+        // Check for walls/obstacles
+        bool hitWall = Physics2D.Raycast(transform.position, rayDirection, rayDistance, groundLayer).collider != null;
+        
+        // Check for other enemies
+        bool hitEnemy = Physics2D.Raycast(transform.position, rayDirection, rayDistance, enemyLayer).collider != null;
+        
+        return hitWall || hitEnemy;
     }
 
     void CheckForPlayerInRange()
@@ -180,17 +201,9 @@ public class Enemy : MonoBehaviour
     {
         if (isDead) return;
 
-        currentHealth -= damage;
-
-        // Apply knockback
+        currentHealth -= damage;        // Apply knockback
         Vector2 knockbackDir = ((Vector2)transform.position - source).normalized;
         rb.AddForce(knockbackDir * knockbackForce, ForceMode2D.Impulse);
-
-        // Play hit sound
-        if (hitSound != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(hitSound);
-        }
 
         // Visual feedback
         StartCoroutine(FlashColor());
@@ -206,19 +219,96 @@ public class Enemy : MonoBehaviour
         {
             Die();
         }
-    }
-
-    // Apply damage specifically from spit projectile
+    }    // Apply freeze effect from spit projectile (no damage)
     public void TakeDamageFromSpit(int damage, Vector2 source)
     {
-        // Don't apply damage, just stun the enemy
-        Vector2 knockbackDir = ((Vector2)transform.position - source).normalized;
-        
-        // Visual feedback
-        StartCoroutine(FlashColor());
+        // Don't modify health, just apply freeze
+        if (isDead) return;
 
-        // Apply stun effect
-        StartCoroutine(StunEnemy(2.0f));
+        // Cancel any existing stun/freeze coroutines if we have one running
+        if (freezeCoroutine != null)
+        {
+            StopCoroutine(freezeCoroutine);
+            freezeCoroutine = null;
+        }
+
+        // Cancel any regular stun coroutines too to avoid conflicts
+        StopAllCoroutines();
+
+        // Set color back to normal briefly for visual feedback
+        if (spriteRenderer != null)
+            spriteRenderer.color = Color.white;
+
+        // Apply freeze effect that completely stops the enemy
+        isStunned = true;
+
+        // Apply new freeze effect (restarts the timer if already frozen)
+        freezeCoroutine = StartCoroutine(FreezeEffect(1.7f));
+    }
+
+    // Special coroutine for freezing effect from spit
+    IEnumerator FreezeEffect(float freezeDuration)
+    {
+        // Store original state to restore later
+        RigidbodyType2D originalType = rb.bodyType;
+        Vector2 originalVelocity = rb.linearVelocity;
+        // Freeze the enemy movement
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
+        rb.bodyType = RigidbodyType2D.Kinematic; // Prevent physics forces
+
+        // Apply visual freeze effect
+        StartCoroutine(IceColorEffect());
+
+        // Wait for the entire freeze duration
+        yield return new WaitForSeconds(freezeDuration);
+
+        // Unfreeze only if not dead
+        if (!isDead)
+        {
+            // Reset renderer color
+            if (spriteRenderer != null)
+                spriteRenderer.color = Color.white;
+
+            // Restore physics
+            rb.bodyType = originalType;
+            isStunned = false;
+        }
+
+        freezeCoroutine = null;
+    }
+
+    // Visual effect for freeze
+    IEnumerator IceColorEffect()
+    {
+        if (spriteRenderer == null) yield break;
+
+        // Create a pulsing ice effect
+        float duration = 0.4f;
+
+        // Initial flash
+        spriteRenderer.color = new Color(0.7f, 0.9f, 1f); // Ice blue
+        yield return new WaitForSeconds(duration);
+
+        spriteRenderer.color = new Color(0.8f, 0.95f, 1f); // Lighter blue
+        yield return new WaitForSeconds(duration);
+        // Keep pulsing between two shades of ice blue while frozen
+        while (isStunned && !isDead)
+        {
+            // Darker ice blue
+            spriteRenderer.color = new Color(0.6f, 0.8f, 1f);
+            yield return new WaitForSeconds(duration);
+
+            // Lighter ice blue
+            spriteRenderer.color = new Color(0.8f, 0.95f, 1f);
+            yield return new WaitForSeconds(duration);
+        }
+
+        // Reset color if coroutine exits but enemy isn't dead (might have been unfrozen)
+        if (!isDead && spriteRenderer != null)
+        {
+            spriteRenderer.color = Color.white;
+        }
     }
 
     // Apply damage specifically from player's beat/punch attack
@@ -231,18 +321,8 @@ public class Enemy : MonoBehaviour
 
         // Apply special knockback effects
         Vector2 knockbackDir = ((Vector2)transform.position - source).normalized;
-        rb.AddForce(knockbackDir * knockbackForce, ForceMode2D.Impulse);
-
-        // Reduce health
+        rb.AddForce(knockbackDir * knockbackForce, ForceMode2D.Impulse);        // Reduce health
         currentHealth -= beatDamage;
-
-        // Play hit sound with higher volume
-        if (hitSound != null && audioSource != null)
-        {
-            audioSource.volume = 1.5f;
-            audioSource.PlayOneShot(hitSound);
-            audioSource.volume = 1.0f; // Reset volume after playing
-        }
 
         // Visual feedback with more intense flashing
         StartCoroutine(BeatFlashEffect());
@@ -290,7 +370,6 @@ public class Enemy : MonoBehaviour
         yield return new WaitForSeconds(0.1f);
         spriteRenderer.color = Color.white;
     }
-
     void Die()
     {
         isDead = true;
@@ -298,16 +377,17 @@ public class Enemy : MonoBehaviour
         // Stop movement
         rb.linearVelocity = Vector2.zero;
 
-        // Disable collider
+        // Stop all coroutines to prevent visual effects from continuing
+        StopAllCoroutines();
+
+        // Disable sprite renderer immediately to make enemy invisible
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.enabled = false;
+        }        // Disable collider
         if (boxCollider != null)
         {
             boxCollider.enabled = false;
-        }
-
-        // Play death sound
-        if (deathSound != null)
-        {
-            AudioSource.PlayClipAtPoint(deathSound, transform.position);
         }
 
         // Spawn death effect
@@ -316,12 +396,15 @@ public class Enemy : MonoBehaviour
             Instantiate(deathEffect, transform.position, Quaternion.identity);
         }
 
-        // Destroy after delay
+        // Destroy after delay (for sound and effects to complete)
         Destroy(gameObject, 1f);
     }
 
     void Flip()
     {
+        // Prevent flipping too frequently
+        if (Time.time - lastFlipTime < flipCooldown) return;
+
         // Flip the sprite and movement direction
         faceRight = !faceRight;
 
@@ -337,6 +420,9 @@ public class Enemy : MonoBehaviour
 
         // Update movement direction
         movement = new Vector2(-movement.x, rb.linearVelocity.y);
+
+        // Update last flip time
+        lastFlipTime = Time.time;
     }
 
     void OnDrawGizmosSelected()
@@ -354,6 +440,10 @@ public class Enemy : MonoBehaviour
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireCube(groundDetection.position, groundCheckSize);
         }
+
+        // Draw player detection radius
+        Gizmos.color = new Color(0, 0.5f, 1f, 0.3f);
+        Gizmos.DrawWireSphere(transform.position, playerDetectionRadius);
     }
 
     // Initialise la barre de vie avec des sprites de cœur
@@ -392,10 +482,10 @@ public class Enemy : MonoBehaviour
             {
                 spriteRenderer = heart.AddComponent<SpriteRenderer>();
             }
-            
+
             // S'assurer que le cœur est visible (ordre de tri et layer)
             spriteRenderer.sortingOrder = 10; // Mettre en premier plan
-            
+
             // Positionner le cœur correctement
             heart.transform.localPosition = new Vector3(i * heartSpacing - ((maxHealth - 1) * heartSpacing / 2), 0, 0);
             heart.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f); // Adapter la taille si nécessaire
@@ -421,6 +511,65 @@ public class Enemy : MonoBehaviour
                 healthHearts[i].SetActive(true);
             else
                 healthHearts[i].SetActive(false);
+        }
+    }    void DetectPlayer()
+    {
+        // Check for player within detection radius
+        Collider2D player = Physics2D.OverlapCircle(transform.position, playerDetectionRadius, playerDetectionLayer);
+
+        // If player layer mask is not set, try with default player layer (usually layer 7)
+        if (player == null && playerDetectionLayer == 0)
+        {
+            player = Physics2D.OverlapCircle(transform.position, playerDetectionRadius, 1 << 7);
+        }
+
+        // Store previous detection state
+        bool wasDetected = playerDetected;
+        
+        // Update detection status
+        playerDetected = player != null;
+
+        if (playerDetected && player != null)
+        {
+            // Determine if player is to the left or right of enemy
+            float horizontalDistance = player.transform.position.x - transform.position.x;
+            bool playerIsRight = horizontalDistance > 0;
+            
+            // Larger deadzone for starting to flip, smaller for continuing in same direction
+            float flipDeadZone = wasDetected ? flipHysteresis * 0.7f : flipHysteresis;
+            
+            // Only flip and change direction if the horizontal distance is significant enough
+            if (Mathf.Abs(horizontalDistance) > flipDeadZone)
+            {
+                // If enemy is not facing the player, turn to face them
+                // But respect the cooldown timer to prevent constant flipping
+                if ((playerIsRight && !faceRight) || (!playerIsRight && faceRight))
+                {
+                    if (Time.time - lastFlipTime >= flipCooldown)
+                    {
+                        Flip();
+                    }
+                }
+
+                // Set movement direction toward player, but only if we can move or the direction has changed
+                movement = new Vector2(playerIsRight ? 1 : -1, rb.linearVelocity.y);
+            }
+            else
+            {
+                // When player is directly above/below or very close, slow down horizontal movement
+                // This creates a more natural "slowing down" when approaching the player
+                if (movement.x != 0)
+                {
+                    // Gradually slow down rather than immediately stop
+                    movement = new Vector2(movement.x * 0.5f, rb.linearVelocity.y);
+                    
+                    // If moving very slow, just stop
+                    if (Mathf.Abs(movement.x) < 0.1f)
+                    {
+                        movement = new Vector2(0, rb.linearVelocity.y);
+                    }
+                }
+            }
         }
     }
 }

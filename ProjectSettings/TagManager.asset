@@ -7,6 +7,7 @@ TagManager:
   - Ground
   - Breakable
   - Pickup
+  - DontDestroyOnLoad
   layers:
   - Default
   - TransparentFX

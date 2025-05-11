@@ -19,19 +19,22 @@ public class PlayerMovement : MonoBehaviour
     public Transform groundCheckPos;
     public Vector2 groundCheckSize = new Vector2(0.5f, 0.05f);
     public LayerMask groundLayer;
+    public bool includeBreakableAsGround = true; // Whether to consider breakable objects as ground
 
     [Header("Gravity")]
     public float baseGravity = 2f;
     public float maxFallSpeed = 18f;
-    public float fallSpeedMultiplier = 2f;
-
+    public float fallSpeedMultiplier = 2f;    
     [Header("Punch Settings")]
     public Transform punchPoint;
-    public float punchRange = 0.15f;
+    public float punchRange = 0.25f;
     public LayerMask breakableLayer;
     public LayerMask enemyLayer;
     public int punchDamage = 1;
     private bool isPunching = false;
+    public float punchCooldown = 0.5f; // Cooldown between punches
+    private float lastPunchTime = -Mathf.Infinity; // Track when last punch occurred
+    public GameObject punchCooldownFeedback; // Optional: UI element to show cooldown
 
     [Header("Spit Settings")]
     public Transform spitPoint;
@@ -56,8 +59,7 @@ public class PlayerMovement : MonoBehaviour
     private bool isLevelCompleted = false;
 
     [Header("Animator")]
-    public Animator animator;
-
+    public Animator animator;    
     void Start()
     {
         // Initialize component references
@@ -70,9 +72,6 @@ public class PlayerMovement : MonoBehaviour
         if (punchPoint == null)
             Debug.LogError("PunchPoint is missing on PlayerMovement!");
 
-        // Validate layers
-        Debug.Log("Enemy Layer value: " + enemyLayer.value);
-        Debug.Log("Player is on layer: " + gameObject.layer);
 
         // Make sure enemyLayer is set to target the Enemy layer if not set in editor
         if (enemyLayer.value == 0)
@@ -80,6 +79,8 @@ public class PlayerMovement : MonoBehaviour
             enemyLayer = LayerMask.GetMask("Enemy"); // Using layer name instead of number
             Debug.LogWarning("Enemy layer was not set, defaulting to Enemy layer");
         }
+        Physics2D.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("Enemy"), true);
+
     }
 
     void Update()
@@ -166,6 +167,13 @@ public class PlayerMovement : MonoBehaviour
     // Méthode pour gérer le mouvement horizontal
     public void Move(InputAction.CallbackContext context)
     {
+        // Ne pas permettre les actions si le jeu est gelé (timeScale = 0)
+        if (Time.timeScale == 0f)
+        {
+            horizontalMovement = 0;
+            return;
+        }
+        
         if (!isLevelCompleted && !isPunching)
         {
             horizontalMovement = context.ReadValue<Vector2>().x;
@@ -175,6 +183,9 @@ public class PlayerMovement : MonoBehaviour
     // Méthode pour gérer le saut
     public void Jump(InputAction.CallbackContext context)
     {
+        // Ne pas permettre les actions si le jeu est gelé (timeScale = 0)
+        if (Time.timeScale == 0f) return;
+        
         if (jumpsRemaining > 0 && !isLevelCompleted && !isPunching)
         {
             // Si le joueur est au sol ou en l'air, il peut sauter
@@ -198,15 +209,23 @@ public class PlayerMovement : MonoBehaviour
                 if (animator != null) animator.SetTrigger("jump");
             }
         }
-    }
-
-    // Méthode pour vérifier si le joueur est au sol
+    }    
+    // Méthode pour vérifier si le joueur est au sol    
     private void GroundCheck()
     {
         if (groundCheckPos == null) return;
 
         bool wasGrounded = jumpsRemaining == maxJumps;
+        
+        // Check for ground on ground layer
         bool isGrounded = Physics2D.OverlapBox(groundCheckPos.position, groundCheckSize, 0, groundLayer);
+        
+        // Also check for breakable objects if that option is enabled
+        if (includeBreakableAsGround)
+        {
+            // Add to existing ground check (not replace)
+            isGrounded = isGrounded || Physics2D.OverlapBox(groundCheckPos.position, groundCheckSize, 0, breakableLayer);
+        }
 
         if (isGrounded)
         {
@@ -218,14 +237,24 @@ public class PlayerMovement : MonoBehaviour
             
             jumpsRemaining = maxJumps;
         }
-    }
-
-    // Méthode pour gérer le punch
+    }    // Méthode pour gérer le punch
     public void Punch(InputAction.CallbackContext context)
     {
-        if (context.performed && !isPunching && !isLevelCompleted)
+        // Ne pas permettre les actions si le jeu est gelé (timeScale = 0)
+        if (Time.timeScale == 0f) return;
+        
+        if (context.performed && !isLevelCompleted)
         {
-            StartPunch();
+            float timeSinceLastPunch = Time.time - lastPunchTime;
+            if (!isPunching && timeSinceLastPunch >= punchCooldown)
+            {
+                StartPunch();
+            }
+            else if (timeSinceLastPunch < punchCooldown)
+            {
+                // Optional: Show feedback that punch is on cooldown
+                Debug.Log("Punch on cooldown: " + (punchCooldown - timeSinceLastPunch).ToString("F1") + "s remaining");
+            }
         }
     }
 
@@ -233,12 +262,29 @@ public class PlayerMovement : MonoBehaviour
     private void StartPunch()
     {
         isPunching = true;
+        lastPunchTime = Time.time; // Update the last punch time
         if (animator != null) animator.SetTrigger("punch");
 
         // Si l'animation est désactivée ou n'existe pas, appeler PunchHit directement
         if (animator == null)
         {
             PunchHit();
+        }
+        else
+        {
+            // If using animator, end punch state after a set time if animation doesn't call PunchHit()
+            StartCoroutine(EndPunchAfterDelay(0.5f));
+        }
+    }
+    
+    // Make sure punch state ends even if animation doesn't trigger the callback
+    private IEnumerator EndPunchAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        // If still punching after the delay, reset the state
+        if (isPunching)
+        {
+            isPunching = false;
         }
     }
 
@@ -251,12 +297,8 @@ public class PlayerMovement : MonoBehaviour
             audioSource.PlayOneShot(punchSound, soundVolume);
         }
         
-        // Debug
-        Debug.Log("PunchHit called. Punch position: " + punchPoint.position + ", range: " + punchRange);
-
         // Vérifier les objets cassables dans la portée du coup
         Collider2D[] hitObjects = Physics2D.OverlapCircleAll(punchPoint.position, punchRange, breakableLayer);
-        Debug.Log("Found " + hitObjects.Length + " breakable objects");
 
         // Appliquer des dégâts aux objets cassables
         foreach (Collider2D obj in hitObjects)
@@ -269,28 +311,18 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // Vérifier les ennemis dans la portée du coup
-        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(punchPoint.position, punchRange, enemyLayer);
-        Debug.Log("Found " + hitEnemies.Length + " enemies within punch range using layer mask: " + enemyLayer.value);
-
-        // Si aucun ennemi n'est trouvé avec le masque, essayer directement avec la couche Enemy
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(punchPoint.position, punchRange, enemyLayer);        // Si aucun ennemi n'est trouvé avec le masque, essayer directement avec la couche Enemy
         if (hitEnemies.Length == 0)
         {
             hitEnemies = Physics2D.OverlapCircleAll(punchPoint.position, punchRange, LayerMask.GetMask("Enemy"));
-            Debug.Log("Retry with Enemy layer found " + hitEnemies.Length + " enemies");
         }
-
-        // Appliquer des dégâts aux ennemis
+          // Appliquer des dégâts aux ennemis (selon punchDamage)
         foreach (Collider2D enemyCollider in hitEnemies)
         {
             Enemy enemy = enemyCollider.GetComponent<Enemy>();
             if (enemy != null)
             {
-                Debug.Log("Applying damage to enemy: " + enemy.name);
                 enemy.TakeDamageFromBeat(punchDamage, transform.position);
-            }
-            else
-            {
-                Debug.Log("Found collider but no Enemy component on " + enemyCollider.name);
             }
         }
 
@@ -300,6 +332,9 @@ public class PlayerMovement : MonoBehaviour
 
     public void Spit(InputAction.CallbackContext context)
     {
+        // Ne pas permettre les actions si le jeu est gelé (timeScale = 0)
+        if (Time.timeScale == 0f) return;
+        
         if (context.performed && !isLevelCompleted && !isPunching)
         {
             StartSpit();
@@ -369,26 +404,14 @@ public class PlayerMovement : MonoBehaviour
     // Pour le débogage du coup de poing
     public void OnEnemyHit(int damage)
     {
-        // Log détaillé des conditions de recherche d'ennemis
-        Debug.Log("OnEnemyHit called with damage: " + damage);
-        Debug.Log("Layer Enemy mask: " + enemyLayer.value);
-        Debug.Log("Punch range: " + punchRange);
-        Debug.Log("Punch position: " + punchPoint.position);
 
         // Vérifier les ennemis dans une zone plus large pour le débogage
         Collider2D[] allEntities = Physics2D.OverlapCircleAll(punchPoint.position, punchRange * 3);
-        Debug.Log("Found " + allEntities.Length + " entities in extended range");
 
         foreach (Collider2D entity in allEntities)
         {
-            Debug.Log("Entity nearby: " + entity.name + " Layer: " + LayerMask.LayerToName(entity.gameObject.layer) + " (Layer #" + entity.gameObject.layer + ")");
-
             // Vérifier si l'entité a un composant Enemy
             Enemy enemyComponent = entity.GetComponent<Enemy>();
-            if (enemyComponent != null)
-            {
-                Debug.Log("Entity has Enemy component");
-            }
         }
     }
 }

@@ -1,0 +1,31 @@
+Timer UI Setup Instructions:
+
+1. Create a Canvas object in your scene (if one doesn't exist already)
+   - Right-click in Hierarchy > UI > Canvas
+   - Make sure the Canvas has a Canvas Scaler component set to "Scale with Screen Size"
+
+2. Create a Timer Display Panel:
+   - Create a Panel object as a child of the Canvas
+   - Name it "TimerPanel"
+   - Set its anchor to top-right
+   - Size it appropriately (e.g., 200x50 pixels)
+   - Add a Background Image component with semi-transparent color
+   - Set its position to be visible at the top-right corner of the screen
+
+3. Add Timer Text:
+   - Create a TextMeshPro Text object as a child of TimerPanel
+   - Name it "TimerText"
+   - Set its text to "00:00:00"
+   - Center it within the TimerPanel
+   - Style with an appropriate font and size
+   - Make sure it's clearly visible against the game background
+
+4. Add the Timer Script:
+   - Add the Timer script to the Canvas object
+   - Assign the TimerText object to the timeText field in the Timer script
+   - Ensure the script is properly configured with default values
+
+5. Test the Timer:
+   - Play the game to ensure the timer starts running automatically
+   - Check that the timer displays correctly and updates in real-time
+   - Verify that the time format is displaying minutes:seconds:milliseconds

@@ -25,8 +25,7 @@ public class PlayerHealth : MonoBehaviour
     private AudioSource audioSource;
 
     // UI Reference (could be connected to a UI manager)
-    private UIManager uiManager;
-
+    private UIManager uiManager;    
     void Start()
     {
         // Get components
@@ -43,12 +42,17 @@ public class PlayerHealth : MonoBehaviour
 
         // Set initial health
         currentHealth = maxHealth;
+        
+        // S'assurer que l'état d'invulnérabilité est réinitialisé au démarrage
+        isInvulnerable = false;
 
         // Find UI Manager in the scene
         uiManager = FindFirstObjectByType<UIManager>();
 
         // Update UI
         UpdateHealthUI();
+        
+        Debug.Log("PlayerHealth initialized - Health: " + currentHealth + ", Invulnerable: " + isInvulnerable);
     }
 
     public void TakeDamage(int damage, Vector2 damageSource)
@@ -80,11 +84,10 @@ public class PlayerHealth : MonoBehaviour
         rb.AddForce(knockbackDirection * knockbackForce, ForceMode2D.Impulse);
 
         // Start invulnerability
-        StartCoroutine(InvulnerabilityFrames());
-
-        // Check if player is dead
+        StartCoroutine(InvulnerabilityFrames());        // Check if player is dead
         if (currentHealth <= 0)
         {
+            Debug.Log("Player health is " + currentHealth + ", calling Die()");
             Die();
         }
     }
@@ -110,10 +113,17 @@ public class PlayerHealth : MonoBehaviour
         // Return to normal state
         spriteRenderer.color = Color.white;
         isInvulnerable = false;
-    }
-
-    void Die()
+    }    void Die()
     {
+        // Check if we're already dead to avoid multiple calls
+        if (currentHealth > 0) return;
+        
+        Debug.Log("Die function executing...");
+        
+        // Make player invulnerable but don't return if already invulnerable
+        // This ensures death process continues even during invulnerability frames
+        isInvulnerable = true;
+        
         // Play death sound
         if (deathSound != null)
         {
@@ -121,19 +131,61 @@ public class PlayerHealth : MonoBehaviour
         }
 
         // Disable player controls
-        playerMovement.enabled = false;
+        if (playerMovement != null)
+            playerMovement.enabled = false;
 
         // Disable collisions
-        GetComponent<Collider2D>().enabled = false;
+        Collider2D col = GetComponent<Collider2D>();
+        if (col != null)
+            col.enabled = false;
 
         // Prevent further movement
-        rb.linearVelocity = Vector2.zero;
-        rb.gravityScale = 0;
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.gravityScale = 0;
+        }
 
         // Play death animation (could be added here)
 
-        // Restart level after delay
-        StartCoroutine(RestartLevel(2f));
+        // Signal game over to GameManager
+        if (GameManager.instance != null)
+        {
+            Debug.Log("Calling GameManager.GameOver()");
+            // Small delay to ensure UI is ready
+            StartCoroutine(DelayedGameOver());
+        }
+        else
+        {
+            Debug.LogError("GameManager.instance is null! Trying to find GameManager in scene.");
+            // Try to find the GameManager in the scene
+            GameManager manager = FindFirstObjectByType<GameManager>();
+            if (manager != null)
+            {
+                Debug.Log("Found GameManager, calling GameOver()");
+                // Use the found manager to call GameOver
+                manager.GameOver();
+            }
+            else
+            {
+                // If GameManager is still not available, use the old restart method
+                Debug.LogError("No GameManager found in scene!");
+                StartCoroutine(RestartLevel(2f));
+            }
+        }
+    }    private IEnumerator DelayedGameOver()
+    {
+        // Small delay to ensure everything is ready
+        yield return new WaitForSeconds(0.1f);
+        Debug.Log("About to call GameManager.GameOver(), GameManager exists: " + (GameManager.instance != null));
+        if (GameManager.instance != null)
+        {
+            GameManager.instance.GameOver();
+        }
+        else
+        {
+            Debug.LogError("GameManager.instance is null in DelayedGameOver!");
+        }
     }
 
     IEnumerator RestartLevel(float delay)

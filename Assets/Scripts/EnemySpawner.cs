@@ -9,13 +9,14 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private GameObject[] breakablePrefabs;
     [SerializeField] private Transform[] spawnPoints;
     
-    [SerializeField] private int maxEnemies = 3;
-    [SerializeField] private int maxBreakables = 2;
-    
+    [SerializeField] private int maxEnemies = 8;
+    [SerializeField] private int maxBreakables = 4;    
     [Header("Timing")]
-    [SerializeField] private float initialSpawnDelay = 2f;
-    [SerializeField] private float enemySpawnInterval = 5f;
-    [SerializeField] private float breakableSpawnInterval = 8f;
+    [SerializeField] private float initialSpawnDelay = 15f;
+    [SerializeField] private float enemySpawnInterval = 15f;
+    [SerializeField] private float breakableSpawnInterval = 20f;
+    [SerializeField] private float minSpawnDelay = 5f;
+    [SerializeField] private float maxSpawnDelay = 10f;
 
     private List<GameObject> activeEnemies = new List<GameObject>();
     private List<GameObject> activeBreakables = new List<GameObject>();
@@ -27,80 +28,89 @@ public class EnemySpawner : MonoBehaviour
         // Start regular spawn cycles
         StartCoroutine(SpawnEnemiesRoutine());
         StartCoroutine(SpawnBreakablesRoutine());
-    }
-
-    private IEnumerator InitialSpawn()
+    }    private IEnumerator InitialSpawn()
     {
         yield return new WaitForSeconds(initialSpawnDelay);
         SpawnRandomEnemies();
+        yield return new WaitForSeconds(Random.Range(minSpawnDelay, maxSpawnDelay));
         SpawnRandomBreakables();
-    }
-
-    private IEnumerator SpawnEnemiesRoutine()
+    }private IEnumerator SpawnEnemiesRoutine()
     {
+        // Initial delay before spawning starts - skip initial spawn since we have InitialSpawn
+        yield return new WaitForSeconds(initialSpawnDelay + enemySpawnInterval);
+        
         while (true)
         {
+            // Main interval between spawn cycles
             yield return new WaitForSeconds(enemySpawnInterval);
+            
             CleanupDestroyedObjects(activeEnemies);
-            SpawnRandomEnemies();
+            
+            // Only spawn if we're under the maximum
+            if (activeEnemies.Count < maxEnemies)
+            {
+                // Add a random delay before actually spawning
+                yield return new WaitForSeconds(Random.Range(minSpawnDelay, maxSpawnDelay));
+                SpawnRandomEnemies();
+            }
         }
     }
 
     private IEnumerator SpawnBreakablesRoutine()
     {
+        // Initial delay before spawning starts
+        yield return new WaitForSeconds(initialSpawnDelay + 5f); // Extra delay for breakables
+        
         while (true)
         {
+            // Main interval between spawn cycles
             yield return new WaitForSeconds(breakableSpawnInterval);
+            
             CleanupDestroyedObjects(activeBreakables);
-            SpawnRandomBreakables();
+            
+            // Only spawn if we're under the maximum
+            if (activeBreakables.Count < maxBreakables)
+            {
+                // Add a random delay before actually spawning
+                yield return new WaitForSeconds(Random.Range(minSpawnDelay, maxSpawnDelay));
+                SpawnRandomBreakables();
+            }
         }
-    }
-
-    private void SpawnRandomEnemies()
+    }    private void SpawnRandomEnemies()
     {
         CleanupDestroyedObjects(activeEnemies);
         
-        int toSpawn = maxEnemies - activeEnemies.Count;
-        if (toSpawn <= 0) return;
+        if (activeEnemies.Count >= maxEnemies) return;
 
-        // Only spawn up to the max limit
-        for (int i = 0; i < toSpawn; i++)
+        // Spawn only one enemy at a time
+        if (enemyPrefabs.Length == 0 || spawnPoints.Length == 0) return;
+
+        // Select random enemy prefab and spawn point
+        GameObject enemyPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+        Transform spawnPoint = GetRandomAvailableSpawnPoint();
+        
+        if (spawnPoint != null)
         {
-            if (enemyPrefabs.Length == 0 || spawnPoints.Length == 0) return;
-
-            // Select random enemy prefab and spawn point
-            GameObject enemyPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
-            Transform spawnPoint = GetRandomAvailableSpawnPoint();
-            
-            if (spawnPoint != null)
-            {
-                GameObject enemy = Instantiate(enemyPrefab, spawnPoint.position, Quaternion.identity);
-                activeEnemies.Add(enemy);
-            }
+            GameObject enemy = Instantiate(enemyPrefab, spawnPoint.position, Quaternion.identity);
+            activeEnemies.Add(enemy);
         }
-    }
-
-    private void SpawnRandomBreakables()
+    }    private void SpawnRandomBreakables()
     {
         CleanupDestroyedObjects(activeBreakables);
         
-        int toSpawn = maxBreakables - activeBreakables.Count;
-        if (toSpawn <= 0) return;
+        if (activeBreakables.Count >= maxBreakables) return;
 
-        // Only spawn up to the max limit
-        for (int i = 0; i < toSpawn; i++)
+        // Spawn only one breakable at a time
+        if (breakablePrefabs.Length == 0 || spawnPoints.Length == 0) return;
+
+        // Select random breakable prefab and spawn point
+        GameObject breakablePrefab = breakablePrefabs[Random.Range(0, breakablePrefabs.Length)];
+        Transform spawnPoint = GetRandomAvailableSpawnPoint();
+        
+        if (spawnPoint != null)
         {
-            if (breakablePrefabs.Length == 0 || spawnPoints.Length == 0) return;
-
-            // Select random breakable prefab and spawn point
-            GameObject breakablePrefab = breakablePrefabs[Random.Range(0, breakablePrefabs.Length)];
-            Transform spawnPoint = GetRandomAvailableSpawnPoint();
-            
-            if (spawnPoint != null)
-            {
-                GameObject breakable = Instantiate(breakablePrefab, spawnPoint.position, Quaternion.identity);
-                activeBreakables.Add(breakable);
-            }
+            GameObject breakable = Instantiate(breakablePrefab, spawnPoint.position, Quaternion.identity);
+            activeBreakables.Add(breakable);
         }
     }
 
